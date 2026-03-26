@@ -1,36 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Government Data Sorter</title>
+    <title>Municipal Data Crawler</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
-        body { margin: 0; padding: 2rem; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); color: #f8fafc; min-height: 100vh; }
-        h1 { text-align: center; color: #3b82f6; margin-bottom: 2rem; }
-        .dashboard-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
-        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-        .form-group { margin-bottom: 1.2rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: bold; }
-        .form-group input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box; outline: none; }
-        .form-group input:focus { border-color: #3b82f6; }
-        .submit-btn { width: 100%; padding: 1rem; background: linear-gradient(45deg, #3b82f6, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
-        .submit-btn:hover { transform: scale(1.02); }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        th { background: rgba(0,0,0,0.2); cursor: pointer; transition: background 0.2s; }
-        th:hover { background: rgba(0,0,0,0.4); color: #3b82f6; }
-        th i { margin-left: 0.5rem; font-size: 0.8rem; }
-        .chart-container { height: 300px; margin-top: 2rem; position: relative; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem;}
-        @media (max-width: 900px) { .dashboard-container { grid-template-columns: 1fr; } }
-        #notification { position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 1rem; border-radius: 8px; display: none; z-index: 9999; }
+        body {
+            margin: 0;
+            padding: 2rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            color: #3b82f6;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #3b82f6;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        th:hover {
+            background: rgba(0, 0, 0, 0.4);
+            color: #3b82f6;
+        }
+
+        th i {
+            margin-left: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 2rem;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+            z-index: 9999;
+        }
     </style>
 </head>
+
 <body>
 
-    <h1><i class="fa-solid fa-server"></i> Government Data Sorter</h1>
+    <h1><i class="fa-solid fa-server"></i> Municipal Data Crawler</h1>
     <div id="notification">Data successfully added & sorted!</div>
 
     <div class="dashboard-container">
@@ -61,11 +175,12 @@
                 <canvas id="mainChart"></canvas>
             </div>
         </div>
-        
+
         <!-- Automated Data Fetching via URL or File -->
         <div class="glass-panel" style="grid-column: 1 / -1; margin-bottom: 2rem; margin-top: 2rem;">
             <h2><i class="fa-solid fa-cloud-arrow-up"></i> Auto-Fetch & Clean Data</h2>
-            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">Upload a CSV/JSON file or provide a URL. The system will automatically clean the data and parse the fields.</p>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">Upload a CSV/JSON file or provide a URL.
+                The system will automatically clean the data and parse the fields.</p>
             <form id="autoFetchForm" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
                     <label>Data URL (CSV/JSON)</label>
@@ -76,19 +191,21 @@
                     <label>Upload File (CSV/JSON)</label>
                     <input type="file" id="dataFile" accept=".csv, .json" style="padding: 0.5rem;">
                 </div>
-                <button type="submit" class="submit-btn auto-fetch-btn" style="width: auto; flex-shrink: 0;"><i class="fa-solid fa-magic"></i> Fetch & Clean</button>
+                <button type="submit" class="submit-btn auto-fetch-btn" style="width: auto; flex-shrink: 0;"><i
+                        class="fa-solid fa-magic"></i> Fetch & Clean</button>
             </form>
         </div>
 
         <!-- Visualizations and Sorting -->
         <div class="glass-panel" style="grid-column: 1 / -1;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <h2><i class="fa-solid fa-table"></i> Sortable Government Data</h2>
-                <a href="/api/export" target="_blank" class="submit-btn" style="width: auto; padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
+                <h2><i class="fa-solid fa-table"></i> Sortable Municipal Data</h2>
+                <a href="/api/export" target="_blank" class="submit-btn"
+                    style="width: auto; padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
                     <i class="fa-solid fa-file-excel"></i> Download Spreadsheet
                 </a>
             </div>
-            
+
             <div style="overflow-x: auto;">
                 <table id="dataTable">
                     <thead>
@@ -111,7 +228,7 @@
         let currentOrder = 'desc';
         let dataChart = null;
 
-        document.getElementById('dataForm').addEventListener('submit', async function(e) {
+        document.getElementById('dataForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const payload = {
                 category: document.getElementById('category').value,
@@ -127,21 +244,21 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if(res.ok) {
+                if (res.ok) {
                     showNotification("Data successfully added & sorted!");
                     document.getElementById('dataForm').reset();
-                    await fetchAndVisualizeData(); 
+                    await fetchAndVisualizeData();
                 } else { alert("Error inserting data."); }
-            } catch(e) { console.error(e); } 
+            } catch (e) { console.error(e); }
             finally { btn.innerHTML = originalText; }
         });
 
-        document.getElementById('autoFetchForm').addEventListener('submit', async function(e) {
+        document.getElementById('autoFetchForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const url = document.getElementById('dataUrl').value;
             const fileInput = document.getElementById('dataFile');
             const file = fileInput.files.length > 0 ? fileInput.files[0] : null;
-            
+
             if (!url && !file) {
                 alert("Please provide either a URL or upload a file.");
                 return;
@@ -154,21 +271,21 @@
             const btn = document.querySelector('.auto-fetch-btn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cleaning...';
-            
+
             try {
                 const res = await fetch('/api/upload_data', {
                     method: 'POST',
                     body: formData
                 });
                 const data = await res.json();
-                if(res.ok) {
+                if (res.ok) {
                     showNotification(data.message || "Data successfully fetched, cleaned & sorted!");
                     document.getElementById('autoFetchForm').reset();
                     await fetchAndVisualizeData();
                 } else {
                     alert("Error: " + (data.message || "Could not process data."));
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
                 alert("An error occurred while fetching/uploading data.");
             } finally {
@@ -224,7 +341,7 @@
 
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (dataChart) dataChart.destroy();
-            
+
             // Premium Gradient
             let gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, 'rgba(59, 130, 246, 0.9)');
@@ -244,10 +361,10 @@
                         hoverBackgroundColor: '#a78bfa'
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
                         legend: { display: false },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.9)',
@@ -258,16 +375,16 @@
                             padding: 12,
                             cornerRadius: 8
                         }
-                    }, 
-                    scales: { 
-                        y: { 
-                            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, 
-                            ticks: { color: '#94a3b8' } 
-                        }, 
-                        x: { 
-                            grid: { display:false, drawBorder: false }, 
-                            ticks: { color: '#cbd5e1', maxRotation: 45, minRotation: 45, font: {size: 10} } 
-                        } 
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#cbd5e1', maxRotation: 45, minRotation: 45, font: { size: 10 } }
+                        }
                     },
                     animation: {
                         duration: 800,
@@ -280,4 +397,5 @@
         document.addEventListener('DOMContentLoaded', fetchAndVisualizeData);
     </script>
 </body>
+
 </html>
