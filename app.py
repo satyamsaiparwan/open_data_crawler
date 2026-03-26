@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from database import init_db, db_session, GovernmentData
 import datetime
 import pandas as pd
@@ -10,6 +10,11 @@ init_db()
 
 @app.route('/')
 def dashboard():
+    try:
+        GovernmentData.query.delete()
+        db_session.commit()
+    except Exception:
+        db_session.rollback()
     return render_template('index.html')
 
 @app.route('/api/data', methods=['GET'])
@@ -186,6 +191,26 @@ def upload_data():
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/export', methods=['GET'])
+def export_data():
+    try:
+        data = GovernmentData.query.all()
+        if not data:
+            return "No data available to export.", 404
+            
+        df = pd.DataFrame([d.to_dict() for d in data])
+        if not df.empty and 'id' in df.columns:
+            df = df.drop(columns=['id'])
+            
+        csv_data = df.to_csv(index=False)
+        return Response(
+            csv_data,
+            mimetype="text/csv",
+            headers={"Content-disposition": "attachment; filename=government_data.csv"}
+        )
+    except Exception as e:
+        return str(e), 500
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):

@@ -82,7 +82,12 @@
 
         <!-- Visualizations and Sorting -->
         <div class="glass-panel" style="grid-column: 1 / -1;">
-            <h2><i class="fa-solid fa-table"></i> Sortable Government Data</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <h2><i class="fa-solid fa-table"></i> Sortable Government Data</h2>
+                <a href="/api/export" target="_blank" class="submit-btn" style="width: auto; padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
+                    <i class="fa-solid fa-file-excel"></i> Download Spreadsheet
+                </a>
+            </div>
             
             <div style="overflow-x: auto;">
                 <table id="dataTable">
