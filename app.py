@@ -203,11 +203,15 @@ def export_data():
         if not df.empty and 'id' in df.columns:
             df = df.drop(columns=['id'])
             
-        csv_data = df.to_csv(index=False)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Municipal Data')
+        output.seek(0)
+        
         return Response(
-            csv_data,
-            mimetype="text/csv",
-            headers={"Content-disposition": "attachment; filename=government_data.csv"}
+            output,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-disposition": "attachment; filename=municipal_data.xlsx"}
         )
     except Exception as e:
         return str(e), 500
