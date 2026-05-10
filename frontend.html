@@ -6,16 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Municipal Data Crawler</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a, #1e293b);
+            --text-main: #f8fafc;
+            --text-muted: #cbd5e1;
+            --panel-bg: rgba(255, 255, 255, 0.05);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --th-bg: rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode {
+            --bg-gradient: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --panel-border: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --th-bg: rgba(0, 0, 0, 0.05);
+        }
+
         body {
             margin: 0;
             padding: 2rem;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: #f8fafc;
+            background: var(--bg-gradient);
+            color: var(--text-main);
             min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
 
         h1 {
@@ -48,7 +70,7 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #cbd5e1;
+            color: var(--text-muted);
             font-weight: bold;
         }
 
@@ -56,9 +78,9 @@
             width: 100%;
             padding: 0.75rem;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.2);
-            color: white;
+            border: 1px solid var(--panel-border);
+            background: var(--input-bg);
+            color: var(--text-main);
             box-sizing: border-box;
             outline: none;
         }
@@ -139,15 +161,179 @@
             display: none;
             z-index: 9999;
         }
+
+        .summary-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .summary-card h3 {
+            color: #10b981;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .summary-card p {
+            margin: 0.2rem 0;
+            color: #d1fae5;
+            font-size: 0.95rem;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-left: 10px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.2);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* KPIs */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .kpi-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .kpi-value { font-size: 1.5rem; font-weight: bold; color: #3b82f6; margin-bottom: 0.25rem; }
+        .kpi-label { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+        .tab {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: var(--input-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid var(--panel-border);
+            white-space: nowrap;
+        }
+        .tab.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        /* Settings Modal */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: var(--bg-gradient);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%; max-width: 400px;
+            color: var(--text-main);
+        }
+        .setting-row { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .close-modal { float: right; cursor: pointer; font-size: 1.5rem; }
+        
+        .header-controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 1rem; align-items: center; }
     </style>
 </head>
 
 <body>
+    <div class="header-controls">
+        <div class="toggle-container">
+            <span><i class="fa-solid fa-moon"></i> Theme</span>
+            <label class="switch">
+                <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <button class="submit-btn" style="width: auto; padding: 0.5rem 1rem;" onclick="openSettings()"><i class="fa-solid fa-gear"></i> Settings</button>
+    </div>
 
     <h1><i class="fa-solid fa-server"></i> Municipal Data Crawler</h1>
     <div id="notification">Data successfully added & sorted!</div>
 
-    <div class="dashboard-container">
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content glass-panel">
+            <span class="close-modal" onclick="closeSettings()">&times;</span>
+            <h2 style="margin-top:0;"><i class="fa-solid fa-sliders"></i> Cleaning Rules</h2>
+            <div class="setting-row">
+                <label>Remove Empty Rows</label>
+                <input type="checkbox" id="rule_remove_empty" checked>
+            </div>
+            <div class="setting-row">
+                <label>Fill Missing Values (Zero)</label>
+                <input type="checkbox" id="rule_fill_zero">
+            </div>
+            <div class="setting-row">
+                <label>Convert Currency ($)</label>
+                <input type="checkbox" id="rule_convert_currency" checked>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted);">These rules apply during the next Auto-Fetch crawl.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-container" id="printableArea">
+        <!-- Chart Panel (Now takes full width top section) -->
+        <div class="glass-panel" style="grid-column: 1 / -1;">
+            <div class="kpi-container">
+                <div class="kpi-card"><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total Records</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpiAccuracy">0%</div><div class="kpi-label">Data Accuracy</div></div>
+                <div class="kpi-card"><div class="kpi-value" id="kpiUpdate">-</div><div class="kpi-label">Last Update</div></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2><i class="fa-solid fa-chart-column"></i> Data Overview</h2>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="toggle-container">
+                        <span>History Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="historyToggle" onchange="fetchAndVisualizeData()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <button class="submit-btn" style="width:auto; padding:0.5rem 1rem;" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF Report</button>
+                </div>
+            </div>
+            <div class="chart-container" style="margin-top: 0; min-height: 250px;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
         <!-- Manual Data Entry Form -->
         <div class="glass-panel">
             <h2><i class="fa-solid fa-folder-plus"></i> Insert Data</h2>
@@ -168,14 +354,6 @@
             </form>
         </div>
 
-        <!-- Chart Panel -->
-        <div class="glass-panel">
-            <h2><i class="fa-solid fa-chart-column"></i> Data Overview</h2>
-            <div class="chart-container" style="margin-top: 0; min-height: 250px;">
-                <canvas id="mainChart"></canvas>
-            </div>
-        </div>
-
         <!-- Automated Data Fetching via URL or File -->
         <div class="glass-panel" style="grid-column: 1 / -1; margin-bottom: 2rem; margin-top: 2rem;">
             <h2><i class="fa-solid fa-cloud-arrow-up"></i> Auto-Fetch & Clean Data</h2>
@@ -194,16 +372,31 @@
                 <button type="submit" class="submit-btn auto-fetch-btn" style="width: auto; flex-shrink: 0;"><i
                         class="fa-solid fa-magic"></i> Fetch & Clean</button>
             </form>
+            
+            <div id="validationSummary" class="summary-card">
+                <h3><i class="fa-solid fa-clipboard-check"></i> Cleaning Report</h3>
+                <p id="summaryText"></p>
+            </div>
         </div>
 
         <!-- Visualizations and Sorting -->
         <div class="glass-panel" style="grid-column: 1 / -1;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
                 <h2><i class="fa-solid fa-table"></i> Sortable Municipal Data</h2>
-                <a href="/api/export" target="_blank" class="submit-btn"
-                    style="width: auto; padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
-                    <i class="fa-solid fa-file-excel"></i> Download Spreadsheet
-                </a>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="text" id="searchInput" placeholder="Semantic Search..." style="padding:0.5rem; border-radius:8px; border:1px solid var(--panel-border); background:var(--input-bg); color:var(--text-main);" onkeyup="debounceSearch()">
+                    <a href="/api/export" target="_blank" class="submit-btn"
+                        style="width: auto; padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
+                        <i class="fa-solid fa-file-excel"></i> Download Excel
+                    </a>
+                </div>
+            </div>
+            
+            <div class="tabs" id="categoryTabs">
+                <div class="tab active" onclick="setTab('All')">All Domains</div>
+                <div class="tab" onclick="setTab('Finance')">Finance</div>
+                <div class="tab" onclick="setTab('Demographics')">Demographics</div>
+                <div class="tab" onclick="setTab('Public Works')">Public Works</div>
             </div>
 
             <div style="overflow-x: auto;">
@@ -227,6 +420,8 @@
         let currentSortBy = 'timestamp';
         let currentOrder = 'desc';
         let dataChart = null;
+        let activeTab = 'All';
+        let searchTimer = null;
 
         document.getElementById('dataForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -267,6 +462,10 @@
             const formData = new FormData();
             if (url) formData.append('url', url);
             if (file) formData.append('file', file);
+            
+            formData.append('remove_empty', document.getElementById('rule_remove_empty').checked);
+            formData.append('fill_zero', document.getElementById('rule_fill_zero').checked);
+            formData.append('convert_currency', document.getElementById('rule_convert_currency').checked);
 
             const btn = document.querySelector('.auto-fetch-btn');
             const originalText = btn.innerHTML;
@@ -279,8 +478,21 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    showNotification(data.message || "Data successfully fetched, cleaned & sorted!");
+                    showNotification("Upload Complete!");
                     document.getElementById('autoFetchForm').reset();
+                    
+                    if (data.report) {
+                        const summaryDiv = document.getElementById('validationSummary');
+                        const summaryText = document.getElementById('summaryText');
+                        summaryText.innerHTML = `
+                            <strong>Total Processed:</strong> ${data.report.initial_rows} rows<br>
+                            <strong>Successfully Added:</strong> ${data.report.added_count} records<br>
+                            <span style="color:#f87171;"><strong>Dropped Empty:</strong> ${data.report.empty_removed} rows</span><br>
+                            <span style="color:#f87171;"><strong>Dropped Invalid:</strong> ${data.report.invalid_removed} entries</span>
+                        `;
+                        summaryDiv.style.display = 'block';
+                    }
+                    
                     await fetchAndVisualizeData();
                 } else {
                     alert("Error: " + (data.message || "Could not process data."));
@@ -308,10 +520,18 @@
         }
 
         async function fetchAndVisualizeData() {
-            const res = await fetch(`/api/data?sort_by=${currentSortBy}&order=${currentOrder}`);
+            const searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value : '';
+            const res = await fetch(`/api/data?sort_by=${currentSortBy}&order=${currentOrder}&search=${encodeURIComponent(searchTerm)}&category=${encodeURIComponent(activeTab)}`);
             const data = await res.json();
             updateTable(data);
             updateChart(data);
+            
+            // Fetch KPIs
+            const kpiRes = await fetch('/api/health_metrics');
+            const kpiData = await kpiRes.json();
+            document.getElementById('kpiTotal').innerText = kpiData.total_records;
+            document.getElementById('kpiAccuracy').innerText = kpiData.accuracy + '%';
+            document.getElementById('kpiUpdate').innerText = kpiData.last_update.split(' ')[0] || '-';
         }
 
         function updateTable(data) {
@@ -330,9 +550,19 @@
         }
 
         function updateChart(data) {
-            // For efficiency and readability, only chart the top 20 rows of the current sort
-            const chartData = data.slice(0, 20);
+            const isHistoryMode = document.getElementById('historyToggle').checked;
+            
+            let chartData = data;
+            if (!isHistoryMode) {
+                // Bar chart mode: only chart the top 20 rows of the current sort
+                chartData = data.slice(0, 20);
+            } else {
+                // History mode: sort by timestamp ascending for a timeline
+                chartData = [...data].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            }
+
             const labels = chartData.map(d => {
+                if (isHistoryMode) return d.timestamp.substring(0, 10);
                 let cat = d.category.length > 12 ? d.category.substring(0, 12) + '..' : d.category;
                 let id = d.identifier.length > 12 ? d.identifier.substring(0, 12) + '..' : d.identifier;
                 return `${cat} - ${id}`;
@@ -348,17 +578,20 @@
             gradient.addColorStop(1, 'rgba(139, 92, 246, 0.3)');
 
             dataChart = new Chart(ctx, {
-                type: 'bar',
+                type: isHistoryMode ? 'line' : 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Value (Top 20 shown)',
+                        label: isHistoryMode ? 'Value Over Time' : 'Value (Top 20 shown)',
                         data: values,
-                        backgroundColor: gradient,
-                        borderColor: '#8b5cf6',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        hoverBackgroundColor: '#a78bfa'
+                        backgroundColor: isHistoryMode ? 'rgba(16, 185, 129, 0.2)' : gradient,
+                        borderColor: isHistoryMode ? '#10b981' : '#8b5cf6',
+                        borderWidth: isHistoryMode ? 3 : 1,
+                        borderRadius: isHistoryMode ? 0 : 6,
+                        hoverBackgroundColor: '#a78bfa',
+                        tension: 0.3,
+                        pointBackgroundColor: '#10b981',
+                        fill: isHistoryMode
                     }]
                 },
                 options: {
@@ -373,7 +606,15 @@
                             borderColor: 'rgba(255,255,255,0.1)',
                             borderWidth: 1,
                             padding: 12,
-                            cornerRadius: 8
+                            cornerRadius: 8,
+                            callbacks: {
+                                title: function(context) {
+                                    if (isHistoryMode) {
+                                        return `${chartData[context[0].dataIndex].category} - ${chartData[context[0].dataIndex].identifier}`;
+                                    }
+                                    return context[0].label;
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -392,6 +633,41 @@
                     }
                 }
             });
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(fetchAndVisualizeData, 300);
+        }
+
+        function setTab(tabName) {
+            activeTab = tabName;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            fetchAndVisualizeData();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            if (dataChart) {
+                // Force chart redraw to update text colors based on css vars
+                fetchAndVisualizeData();
+            }
+        }
+
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        
+        function exportPDF() {
+            const element = document.getElementById('printableArea');
+            const opt = {
+                margin:       0.5,
+                filename:     'Municipal_Data_Report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
         }
 
         document.addEventListener('DOMContentLoaded', fetchAndVisualizeData);

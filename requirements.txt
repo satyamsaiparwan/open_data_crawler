@@ -4,3 +4,6 @@ requests
 pandas
 beautifulsoup4
 openpyxl
+pdfplumber
+lxml
+html5lib
