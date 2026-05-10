@@ -105,7 +105,12 @@ def add_data():
 @app.route('/api/health_metrics', methods=['GET'])
 def health_metrics():
     total_records = GovernmentData.query.count()
-    accuracy = 98.5 # Mock metric for demo
+    # Real accuracy: count rows with non-zero, non-null values
+    if total_records > 0:
+        valid = GovernmentData.query.filter(GovernmentData.value != 0.0).count()
+        accuracy = round((valid / total_records) * 100, 1)
+    else:
+        accuracy = 100.0
     last_record = GovernmentData.query.order_by(GovernmentData.timestamp.desc()).first()
     last_update = last_record.timestamp.strftime("%Y-%m-%d %H:%M:%S") if last_record else "Never"
     
@@ -114,6 +119,62 @@ def health_metrics():
         "accuracy": accuracy,
         "last_update": last_update
     })
+
+@app.route('/api/preview_data', methods=['POST'])
+def preview_data():
+    """Process a file/URL but return first 5 rows as preview without saving to DB."""
+    try:
+        df = None
+        if 'file' in request.files and request.files['file'].filename != '':
+            file = request.files['file']
+            filename = file.filename.lower()
+            if filename.endswith('.csv'):
+                df = pd.read_csv(file)
+            elif filename.endswith('.json'):
+                df = pd.read_json(file)
+            else:
+                return jsonify({"status": "error", "message": "Unsupported file format."}), 400
+        else:
+            url = request.form.get('url', '').strip()
+            if url:
+                response = requests.get(url)
+                response.raise_for_status()
+                content_type = response.headers.get('content-type', '').lower()
+                if 'html' in content_type:
+                    try:
+                        tables = pd.read_html(response.text)
+                        if tables:
+                            df = tables[0]
+                    except ValueError:
+                        pass
+                if df is None:
+                    if 'csv' in content_type or url.endswith('.csv'):
+                        df = pd.read_csv(io.StringIO(response.text))
+                    elif 'json' in content_type or url.endswith('.json'):
+                        df = pd.read_json(io.StringIO(response.text))
+                    else:
+                        try:
+                            df = pd.read_csv(io.StringIO(response.text))
+                        except Exception:
+                            return jsonify({"status": "error", "message": "Could not parse data."}), 400
+            else:
+                return jsonify({"status": "error", "message": "No file or URL provided."}), 400
+
+        if df is None or df.empty:
+            return jsonify({"status": "error", "message": "No data found or file is empty."}), 400
+        
+        total_rows = len(df)
+        columns = df.columns.tolist()
+        preview_rows = df.head(5).fillna('').astype(str).values.tolist()
+
+        return jsonify({
+            "status": "success",
+            "total_rows": total_rows,
+            "columns": columns,
+            "preview": preview_rows
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/upload_data', methods=['POST'])
 def upload_data():
@@ -218,7 +279,7 @@ def upload_data():
             if any(k in col_lower for k in ['val', 'amount', 'price', 'count', 'total', 'population', 'num', 'metric']):
                 val_col = col
                 if convert_currency:
-                    df[val_col] = df[val_col].replace('[\$,]', '', regex=True)
+                    df[val_col] = df[val_col].replace(r'[\$,]', '', regex=True)
                 df[val_col] = pd.to_numeric(df[val_col], errors='coerce')
                 break
 
@@ -227,7 +288,7 @@ def upload_data():
             for col in columns:
                 if convert_currency:
                     if df[col].dtype == object:
-                        df[col] = df[col].replace('[\$,]', '', regex=True)
+                        df[col] = df[col].replace(r'[\$,]', '', regex=True)
                 coerced = pd.to_numeric(df[col], errors='coerce')
                 # If more than 50% are numbers, consider it numeric
                 if coerced.notna().mean() > 0.5:
